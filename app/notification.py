@@ -25,7 +25,7 @@ from matplotlib.patches import Rectangle
 from pytz import timezone
 from stockstats import StockDataFrame
 from telegram.error import TimedOut as TelegramTimedOut
-
+from analyzers.indicators import iiv
 from analyzers.indicators import candle_recognition, ichimoku
 from analyzers.utils import IndicatorUtils
 from notifiers.discord_client import DiscordNotifier
@@ -716,6 +716,9 @@ class Notifier(IndicatorUtils):
         candle_pattern = self.candle_check(candles_data, candle_period)
         self.plot_candlestick(ax1, df, candle_period, candle_pattern)
 
+        #Calculate and plot IIV Signals on candlestick chart
+        self.plot_iiv(ax1,candles_data)
+        
         # Plot RSI (14)
         self.plot_rsi(ax2, df)
 
@@ -944,6 +947,42 @@ class Notifier(IndicatorUtils):
                 transform=ax.transAxes,  fontsize=textsize, va='top')
         ax.text(0.46, 0.94, 'EMA (99, close)', color='firebrick',
                 transform=ax.transAxes,  fontsize=textsize, va='top')
+
+    def plot_iiv(self,ax,historical_data):
+        #Calculate and plot IIV Signals on candlestick chart
+        indicator_conf = {}
+
+        if 'iiv' in self.indicator_config:
+            for config in self.indicator_config['iiv']:
+                if config['enabled'] :
+                    indicator_conf = config
+                    hot_thresh = indicator_conf['hot'] if 'hot' in indicator_conf else 10
+
+                    marker_style = dict(linestyle=':', color='0.8', markersize=10,mfc="gold", mec="orangered")
+                    red_style={ **marker_style, 'mfc': 'red'}
+                    df =iiv.IIV().analyze(historical_data,hot_thresh=hot_thresh)
+
+                    if(df['close'].count() > 120):
+                        df = df.iloc[-120:]
+
+                    iiv_markers = []
+                    for i, row in df.iterrows():
+                        if row['is_hot']==True:
+                            iiv_markers.append(row['high'])
+                        else:
+                            iiv_markers.append(np.nan)
+
+ 
+                    for value in iiv_markers:
+                        if np.isnan(value)==False:
+                            ax.plot(df.index, iiv_markers, marker='*', **marker_style)
+                            legend_elements = [Line2D([0], [0], marker='*', label='IIP',**red_style),
+                                Line2D([0], [0], marker='*', label='IIV',**marker_style)]
+                            ax.legend(handles=legend_elements,loc='center left')
+
+                            break 
+                    break
+
 
     def plot_rsi(self, ax, df):
         textsize = 11
