@@ -959,7 +959,7 @@ class Notifier(IndicatorUtils):
                     hot_thresh = indicator_conf['hot'] if 'hot' in indicator_conf else 10
 
                     marker_style = dict(linestyle=':', color='0.8', markersize=10,mfc="gold", mec="orangered")
-                    red_style={ **marker_style, 'mfc': 'red'}
+                    #red_style={ **marker_style, 'mfc': 'red'}
                     df =iiv.IIV().analyze(historical_data,hot_thresh=hot_thresh)
 
                     if(df['close'].count() > 120):
@@ -976,7 +976,7 @@ class Notifier(IndicatorUtils):
                     for value in iiv_markers:
                         if np.isnan(value)==False:
                             ax.plot(df.index, iiv_markers, marker='*', **marker_style)
-                            legend_elements = [Line2D([0], [0], marker='*', label='IIP',**red_style),
+                            legend_elements = [
                                 Line2D([0], [0], marker='*', label='IIV',**marker_style)]
                             ax.legend(handles=legend_elements,loc='center left')
 
