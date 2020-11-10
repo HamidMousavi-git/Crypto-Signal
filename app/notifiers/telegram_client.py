@@ -48,6 +48,10 @@ class TelegramNotifier(NotifierUtils):
         # print(message_chunks)
         # exit()
         for message_chunk in message_chunks:
+            if message_chunk.find('hot') != -1:
+                message_chunk='🟢'+message_chunk
+            elif message_chunk.find('cold') != -1:
+                message_chunk='🔴'+message_chunk
             self.bot.send_message(
                 chat_id=self.chat_id, text=message_chunk, parse_mode=self.parse_mode)
 
